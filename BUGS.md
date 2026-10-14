@@ -773,6 +773,25 @@ was the artefact. None did, so the clamp is back at ±10. The bound never acted
 at either value; `d_beyond_5` and `d_beyond_10` in a longer run will show
 whether it ever does.
 
+**Upstream status (2026-10-14).**
+- **Still present in mlx-vlm 0.7.8, the latest release.** It behaves exactly
+  as in 0.7.2. The Qwen3-VL model code is unchanged between the two versions,
+  and no generator change touches decode positions.
+- **Root cause, pinned down.** Qwen3-VL's `get_rope_index` computes
+  `rope_deltas` against the row's unpadded length in its image branch, but
+  against the padded width (`attention_mask.shape[-1]`) in its text-only
+  branch. `BatchKVCache` offsets already exclude the padding, so text-only rows
+  lose it twice.
+- **A one-line fix is tested on 0.7.8.** Using `attention_mask.sum(-1)` in the
+  text-only branch makes padded rows decode at continuous positions:
+  - with teacher forcing, clean-model argmax agreement on padded rows goes
+    from 83.2% to 98.7% (unpadded control: 98.6%);
+  - the worst emitted token goes from −36.8 to −1.5.
+- **Reported upstream:**
+  [Blaizzy/mlx-vlm#2517](https://github.com/Blaizzy/mlx-vlm/issues/2517).
+  This repository still pins 0.7.2 and relies on the equal-length batching
+  workaround above.
+
 ## 27. KL is non-zero at step 0 — **noted** (numerics, not a defect)
 
 With identical weights, KL at update 0 is about 1.5e-4 per token instead of 0.

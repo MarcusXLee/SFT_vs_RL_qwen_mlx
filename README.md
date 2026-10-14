@@ -81,6 +81,8 @@ measured impact. The ones that matter most to anyone doing similar work:
     KL spike.
   - The fix batches only equal-length prompts and checks, on every call, that
     the sampler conditions on exactly the tokens the update scores.
+  - Still present in mlx-vlm 0.7.8. Reported upstream with a tested one-line
+    fix: [Blaizzy/mlx-vlm#2517](https://github.com/Blaizzy/mlx-vlm/issues/2517).
 - **`batch_generate` applies the chat template itself,** so passing templated
   text templates it twice (#26). The measured impact was negligible.
 - **The shipped verifier** rejects formulas with spaces (#1), rejects some of
