@@ -517,7 +517,8 @@ bash scripts/run_qwen_gp_ablation.sh evaluation/configs/qwen_gp_language.yaml 50
 | single-turn GRPO | `rl/trainer/grpo_trainer_mlx.py` | runs end to end (3 updates) |
 | launcher | `scripts/train_grpo_qwen.py` | runs |
 | single-turn GRPO | `rl/trainer/grpo_trainer_mlx.py` | runs; validated; no configuration beats SFT |
-| **multi-turn GRPO** | `rl/trainer/grpo_multiturn_mlx.py` | runs v1–v4 **invalid**: rollout sampled at corrupted positions from turn 2 (BUGS.md #26); fixed and verified; 8-update pilot: no spike (kl/tok ≤ 1.4e-2, \|d\| ≤ 2.7); full run next |
+| **multi-turn GRPO** | `rl/trainer/grpo_multiturn_mlx.py` | GP-L run v5 complete (60/60 updates; results above). Runs v1–v4 invalid, see BUGS.md #26 |
+| **multi-turn GRPO, GP-VL** | `rl/trainer/grpo_vl_mlx.py` | verified (`scripts/verify_vl_grpo.py`); run `mt_grpo_vl_v1` complete (60/60 updates; results above) |
 | trajectory PPO with the critic | — | not written; may not be attempted |
 
 ### Why multi-turn GRPO before PPO
@@ -641,13 +642,13 @@ how these numbers should be read:
 
 ## 10. Not done yet
 
-- **SFT on GP-VL.** Done for GP-L (see above); the vision arm is not yet run.
-- **RL.** `rl/trainer/` is torch + DeepSpeed + CUDA and cannot run on this
-  machine. A Qwen port also needs a value head sized from `config.hidden_size`
-  (currently hardcoded to 4096) and removal of the Mllama `cross_attention_mask`
-  plumbing, which Qwen has no equivalent of.
 - **V-IRL.** Untouched; needs its route dataset and Google Maps credentials.
-- **OOD splits.** Only the in-distribution setting has been run. Rule-OOD
-  (`treat_face_cards_as_10: false`) and visual-OOD (`face_cards_color`) are
-  configured but not yet measured — and those are where the paper's central
-  claim actually lives.
+- **PPO with a critic.** `storage_mlx.py` and the value head in `policy_mlx.py`
+  are ported, but no PPO trainer has been written. Multi-turn GRPO stands in
+  for it.
+- **Second seeds.** Every SFT and RL result here is a single run.
+- **A reward that favours early success.** This would test why GP-VL RL is weak
+  on the first attempt (see "GP-VL GRPO result").
+
+Done since this list was first written: GP-VL SFT, multi-turn GRPO for both
+modalities, and the rule-OOD and visual-OOD evaluations (all at n = 200).
