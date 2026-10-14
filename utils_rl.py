@@ -6,6 +6,7 @@ By Tianzhe
 
 import re
 from dataclasses import dataclass
+from fractions import Fraction
 from typing import List
 from collections import Counter
 from utils_general import re_match
@@ -20,6 +21,25 @@ REWARD_FN = {
     "INCORRECT_NUMBER": -2,
     "ILLEGAL_FORMULA": -3,
 }
+
+def exact_eval(formula: str):
+    """Evaluate an arithmetic formula in exact rational arithmetic.
+
+    `eval` does float division, so a mathematically correct answer can miss the
+    target by a rounding error and be scored wrong:
+
+        eval("(2/5)*6*10") -> 24.000000000000004 != 24
+
+    The environment's own solver already uses `Fraction` for exactly this reason
+    (see GeneralPointEnv_oneline.solve), so a solution it generated could be
+    rejected by the verifier that is meant to accept it. Wrapping every integer
+    literal in `Fraction` makes the two agree.
+
+    The caller has already rejected any formula containing characters outside
+    `0-9 + - * / ( )`, so the substitution below cannot introduce new syntax.
+    """
+    return eval(re.sub(r'\d+', lambda m: f'Fraction({m.group()})', formula))
+
 
 def aggregate_fn(message_list):
     # aggregate message into a string with comma separated and ending with '.'
@@ -136,7 +156,7 @@ def step_rewards(card_nums: list,
     # if currently reward is 0
     if stepper.reward == 0:
         try:
-            if eval(current_formula) == target_points:
+            if exact_eval(current_formula) == target_points:
                 stepper.add(REWARD_FN["CORRECT_SOLUTION"], "Correct solution")
                 return stepper
         except Exception as e:

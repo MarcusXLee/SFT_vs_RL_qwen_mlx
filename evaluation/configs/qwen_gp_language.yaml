@@ -1,0 +1,31 @@
+evaluator: QwenEvaluator
+
+num_traj: 50
+order: false
+env_config:
+  id: 'gym_cards/GeneralPoint-oneline-v0'
+  target_points: 24
+  treat_face_cards_as_10: true # edit rule
+  resolution: 1200
+  verify_iter: 5
+  strip_formula_whitespace: false # true = judge spaced formulas on arithmetic
+  ood: false # ood means only generate cards containing at least one jqk
+
+model: qwen
+model_path: "models/Qwen3-VL-8B-Instruct"
+adapter_path: "" # "" = base model; set to an SFT/RL adapter directory or .safetensors
+prompt_config:
+  use_vision: false
+  use_language: true
+  enable_verification: true
+  # _EG variants include an output example. The shipped llama configs use the
+  # non-EG prompts because that checkpoint was SFT'd onto the format; an
+  # off-the-shelf instruct model is evaluated like the API models were.
+  prompt_language: ["Q_GeneralPoint_EQN_L_EG"]
+  pattern_language: ["formula"]
+
+generation_config:
+  max_new_tokens: 256 # mapped to MLX max_tokens by QwenEvaluator
+  temperature: 0.0
+output_dir: logs/qwen_gp_language/in-distribution.jsonl
+seed: 42

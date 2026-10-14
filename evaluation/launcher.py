@@ -2,9 +2,12 @@ import yaml
 from box import Box
 from evaluation.evaluator import evaluator_init
 from tqdm import tqdm
-import accelerate
-import wandb
 import datetime
+
+try:
+    import accelerate  # noqa: F401  (imported for side effects on the GPU path)
+except ImportError:
+    accelerate = None
 
 from utils_general import load_config
 from utils_rl import set_str_action_space

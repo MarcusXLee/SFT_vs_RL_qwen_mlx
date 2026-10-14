@@ -15,7 +15,12 @@ import argparse
 from typing import Dict
 import re
 import json
-import torch
+try:
+    import torch
+except ImportError:
+    # Optional: the MLX/Apple-silicon evaluation path has no torch installed.
+    # Only init_seed uses it, and it degrades to numpy/random seeding below.
+    torch = None
 import numpy as np
 import random
 from tqdm import tqdm
@@ -26,8 +31,10 @@ def init_seed(seed):
     """
     Set up random seed
     """
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
+    if torch is not None:
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed(seed)
     np.random.seed(seed)
     random.seed(seed)
 """
@@ -197,7 +204,24 @@ def re_match(text: str, pattern: str):
     
     return pred
 
-def robust_str_to_list(list_like_str: str):
+def robust_str_to_list(list_like_str):
+    """Normalise a parsed "cards"/"number" field to a list of 4 strings.
+
+    re_match returns a real Python list whenever json.loads succeeds, and only
+    falls back to a regex (yielding a string like "[K, 5, 2, 4]") when it does
+    not. The string branch below used to be the only one, so a model emitting
+    *valid* JSON hit AttributeError on .replace and silently got [], which in
+    vision mode compares unequal to the ground truth and scores
+    INCORRECT_VISION on every single step.
+
+    That went unnoticed because the shipped prompt's own example is invalid
+    JSON (trailing comma, unquoted K), so models imitate it and take the regex
+    path. Any model that emits well-formed JSON -- including anything SFT'd on
+    json.dumps targets -- would score 0% card recognition.
+    """
+    if isinstance(list_like_str, (list, tuple)):
+        items = [str(x).strip() for x in list_like_str]
+        return items if len(items) == 4 else []
     try:
         list_like_str = list_like_str.replace('[', '').replace(']', '').replace('\'', '').replace(' ', '').split(',')
         assert len(list_like_str) == 4

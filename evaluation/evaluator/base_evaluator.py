@@ -12,14 +12,26 @@ try:
 except ImportError:
     pass
 
-import torch
+try:
+    import torch
+except ImportError:
+    torch = None
 from utils_general import StatLogger, process_formula, re_match, init_seed
 from utils_rl import REWARD_FN, REWARD_FN_VIRL
 from prompt_lib import PROMPT_FN
 import os
 import json
 from tqdm import tqdm
-import accelerate
+try:
+    import accelerate
+except ImportError:
+    # The MLX/Apple-silicon path runs single-process and has no accelerate.
+    # Only is_main_process is consulted, and it is always true here.
+    class _SingleProcessAccelerator:
+        is_main_process = True
+
+    class accelerate:
+        Accelerator = _SingleProcessAccelerator
 class BaseEvaluator:
     def __init__(self, action_space, daytime, env_config, prompt_config, generation_config, output_dir, seed=42, num_traj=1, order=False, **kwargs):
         # first set random seed
@@ -48,7 +60,12 @@ class BaseEvaluator:
         os.makedirs(os.path.dirname(output_dir), exist_ok=True)
 
         if not os.path.isdir(output_dir):
-            self.output_dir = output_dir.replace('.', f'_{daytime}.')
+            # Timestamp the filename only. str.replace substitutes EVERY dot, so
+            # a dot anywhere in the directory (e.g. logs/run.v2/log.jsonl) used
+            # to be rewritten into the path, scattering results across
+            # directories that no longer matched the one the caller asked for.
+            stem, ext = os.path.splitext(output_dir)
+            self.output_dir = f'{stem}_{daytime}{ext}'
         else:
             self.output_dir = os.path.join(output_dir, f'output_{daytime}/')
             os.makedirs(self.output_dir, exist_ok=True)

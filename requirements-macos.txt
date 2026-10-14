@@ -1,0 +1,43 @@
+# Apple silicon development environment; Python 3.11. GPU-only extras excluded.
+torch==2.5.1
+transformers==4.45.2
+tqdm
+python-box
+accelerate==1.0.1
+Pillow
+gymnasium
+peft==0.13.2
+wandb
+opencv-python==4.10.0.84
+shapely
+termcolor
+polyline
+folium
+geopy
+numpy==1.26.4
+easydict
+pyyaml
+requests
+openai>=1,<2
+selenium==4.9.1
+matplotlib
+flask
+flask_cors
+flask_socketio
+prettytable
+langchain<0.4
+google-search-results
+webdriver_manager
+ipdb
+pandas
+gradio_client==0.6.1
+torchvision==0.20.1
+ujson
+sentencepiece
+einops
+timm<1.1
+gradio==3.50.2
+open_clip_torch==2.29.0
+dashscope
+clip @ git+https://github.com/openai/CLIP.git@d05afc436d78f1c48dc0dbf8e5980a9d471f35f6
+lightglue @ git+https://github.com/cvg/LightGlue.git@eb42fee2d71449efb0aa5c10549752b5d75384d8

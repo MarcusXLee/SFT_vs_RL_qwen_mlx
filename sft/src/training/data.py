@@ -9,12 +9,19 @@ from transformers.models.mllama.processing_mllama import get_cross_attention_tok
 import ujson as json
 from PIL import Image
 from torch.utils.data import Dataset
-from decord import VideoReader, cpu
 import wandb
 from .params import DataArguments
 from .constants import *
 
 def encode_video(video_path, max_num_frames=10):
+    try:
+        from decord import VideoReader, cpu
+    except ImportError as exc:
+        raise ImportError(
+            "Video input requires decord; install it on a supported platform. "
+            "Text and image datasets do not require decord."
+        ) from exc
+
     def uniform_sample(l, n):
         gap = len(l) / n
         idxs = [int(i * gap + gap / 2) for i in range(n)]

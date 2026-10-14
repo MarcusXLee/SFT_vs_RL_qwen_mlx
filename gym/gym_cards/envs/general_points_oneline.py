@@ -3,6 +3,7 @@ from typing import Optional
 
 import numpy as np
 import random
+import re
 
 import gymnasium as gym
 from gymnasium import spaces
@@ -89,7 +90,15 @@ class GeneralPointEnv_oneline(gym.Env):
 
     """
     def __init__(self, treat_face_cards_as_10=True, target_points=24, \
-            resolution=1200, show_eqn=True, verify_iter=5, ood=False, language_only=True, face_cards_color='mixed'):
+            resolution=1200, show_eqn=True, verify_iter=5, ood=False, language_only=True, face_cards_color='mixed',
+            strip_formula_whitespace=False):
+        # strip_formula_whitespace: the shipped verifier treats ' ' as an illegal
+        # character, so '10 + 5 * 2 + 4' scores ILLEGAL_FORMULA even though it
+        # equals 24. That matches the published setup (the SFT'd checkpoint emits
+        # no spaces). Set True to judge spaced formulas on their arithmetic instead.
+        # Whitespace *between two digits* is never removed: '1 0' must not become
+        # '10', or a malformed answer would be silently upgraded to a correct one.
+        self.strip_formula_whitespace = strip_formula_whitespace
         self.target_points = target_points
         self.treat_face_cards_as_10 = treat_face_cards_as_10
         self.set_action_space()
@@ -200,6 +209,9 @@ class GeneralPointEnv_oneline(gym.Env):
             current_formula = current_formula.split('=')[0]
         except:
             pass
+        if self.strip_formula_whitespace and isinstance(current_formula, str) \
+                and not re.search(r'\d\s+\d', current_formula):
+            current_formula = ''.join(current_formula.split())
         
         recognized_cards = robust_str_to_list(recognized_cards)
         translated_number = robust_str_to_list(translated_number)

@@ -20,5 +20,28 @@ wandb/
 train_ckpt/
 data/
 slurm_logs/
+# cloned RL reference implementations (see third_party/REFERENCES.md for pinned SHAs)
+third_party/*/
 
 output/
+# evaluation run artefacts (jsonl already ignored; this also covers rendered card images)
+logs/
+# cloned RL reference implementations (see third_party/REFERENCES.md for pinned SHAs)
+third_party/*/
+# Local Python environment
+.venv/
+.python/
+.cache/
+
+.venv-qwen/
+
+models/
+
+# Claude Code personal settings (not shared)
+.claude/settings.local.json
+
+# macOS folder metadata
+.DS_Store
+
+# Codex CLI local settings (personal, like .claude/settings.local.json)
+.codex/
